@@ -1,0 +1,28 @@
+# 프로젝트 구조
+my-erp-system/
+├── .gitignore
+├── README.md
+├── backend/
+└── frontend/
+
+# .gitignore 예시
+# Backend
+backend/build/
+backend/.gradle/
+backend/out/
+backend/*.log
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Oracle Wallet (중요!)
+# backend/src/main/resources/Wallet_*/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# 환경 설정 파일 (DB 비밀번호 포함)
+backend/src/main/resources/application-local.yml
