@@ -1,0 +1,33 @@
+package com.start.erp.domain
+
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.Table
+import java.time.LocalDate
+
+@Entity
+@Table(name= "employees")
+data class Employee (
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "employee_seq")
+    val id: Long? = null,
+
+    @Column(nullable = false, length = 100)
+    val name: String,
+
+    @Column(nullable = false, unique = true, length = 100)
+    val email: String,
+
+    @Column(length = 50)
+    val department: String? = null,
+
+    @Column(length = 50)
+    val position: String? = null,
+
+    @Column (name = "hire_date")
+    val hireDate: LocalDate? = LocalDate.now()
+)
