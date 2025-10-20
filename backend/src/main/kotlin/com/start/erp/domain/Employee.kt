@@ -1,11 +1,6 @@
 package com.start.erp.domain
 
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.Table
+import jakarta.persistence.*
 import java.time.LocalDate
 
 @Entity
@@ -22,12 +17,13 @@ data class Employee (
     @Column(nullable = false, unique = true, length = 100)
     val email: String,
 
-    @Column(length = 50)
-    val department: String? = null,
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    val department: Department? = null,
 
     @Column(length = 50)
     val position: String? = null,
 
     @Column (name = "hire_date")
-    val hireDate: LocalDate? = LocalDate.now()
+    val hireDate: LocalDate = LocalDate.now()
 )
