@@ -1,18 +1,11 @@
 package com.start.erp.controller
 
-import com.start.erp.domain.Employee
+import com.start.erp.dto.EmployeeRequest
+import com.start.erp.dto.EmployeeResponse
 import com.start.erp.service.EmployeeService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.CrossOrigin
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/employees")
@@ -20,44 +13,48 @@ import org.springframework.web.bind.annotation.RestController
 class EmployeeController(
     private val employeeService: EmployeeService
 ) {
+
     @GetMapping
-    fun getAllEmployees(): ResponseEntity<List<Employee>> {
+    fun getAllEmployees(): ResponseEntity<List<EmployeeResponse>> {
         return ResponseEntity.ok(employeeService.findAll())
     }
 
     @GetMapping("/{id}")
-    fun getEmployee(@PathVariable id: Long): ResponseEntity<Employee> {
+    fun getEmployee(@PathVariable id: Long): ResponseEntity<EmployeeResponse> {
         return employeeService.findById(id)?.let {
             ResponseEntity.ok(it)
         } ?: ResponseEntity.notFound().build()
     }
 
     @PostMapping
-    fun createEmployee(@RequestBody employee: Employee): ResponseEntity<Employee> {
+    fun createEmployee(@RequestBody request: EmployeeRequest): ResponseEntity<Any> {
         return try {
             ResponseEntity.status(HttpStatus.CREATED)
-                .body(employeeService.save(employee))
+                .body(employeeService.create(request))
         } catch (e: IllegalArgumentException) {
-            ResponseEntity.badRequest().build()
+            ResponseEntity.badRequest().body(mapOf("message" to e.message))
         }
-
     }
 
     @PutMapping("/{id}")
     fun updateEmployee(
         @PathVariable id: Long,
-        @RequestBody employee: Employee
-    ) : ResponseEntity<Employee> {
+        @RequestBody request: EmployeeRequest
+    ): ResponseEntity<Any> {
         return try {
-            ResponseEntity.ok(employeeService.update(id, employee))
+            ResponseEntity.ok(employeeService.update(id, request))
         } catch (e: IllegalArgumentException) {
-            ResponseEntity.notFound().build()
+            ResponseEntity.badRequest().body(mapOf("message" to e.message))
         }
     }
 
     @DeleteMapping("/{id}")
     fun deleteEmployee(@PathVariable id: Long): ResponseEntity<Void> {
-        employeeService.delete(id)
-        return ResponseEntity.noContent().build()
+        return try {
+            employeeService.delete(id)
+            ResponseEntity.noContent().build()
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.notFound().build()
+        }
     }
 }
