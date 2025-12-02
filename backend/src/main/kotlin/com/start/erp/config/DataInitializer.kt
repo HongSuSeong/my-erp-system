@@ -22,7 +22,7 @@ class DataInitializer {
         employeeRepository: EmployeeRepository,
         passwordEncoder: PasswordEncoder
     ) = ApplicationRunner {
-        // 관리자 계정
+        // 관리자 계정 (ADMIN)
         if (!userRepository.existsByUsername("admin")) {
             val admin = User(
                 username = "admin",
@@ -32,10 +32,23 @@ class DataInitializer {
                 role = "ADMIN"
             )
             userRepository.save(admin)
-            println("✅ 관리자 계정 생성: admin / admin123")
+            println("✅ 관리자 계정 생성: admin / admin123 (ADMIN)")
         }
 
-        // 일반 사용자 계정
+        // 매니저 계정 (MANAGER)
+        if (!userRepository.existsByUsername("manager")) {
+            val manager = User(
+                username = "manager",
+                password = passwordEncoder.encode("manager123"),
+                name = "매니저",
+                email = "manager@example.com",
+                role = "MANAGER"
+            )
+            userRepository.save(manager)
+            println("✅ 매니저 계정 생성: manager / manager123 (MANAGER)")
+        }
+
+        // 일반 사용자 계정 (USER)
         if (!userRepository.existsByUsername("user")) {
             val user = User(
                 username = "user",
@@ -45,7 +58,7 @@ class DataInitializer {
                 role = "USER"
             )
             userRepository.save(user)
-            println("✅ 일반 사용자 계정 생성: user / user123")
+            println("✅ 일반 사용자 계정 생성: user / user123 (USER)")
         }
 
         // 부서 데이터

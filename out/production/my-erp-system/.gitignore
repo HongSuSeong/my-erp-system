@@ -1,0 +1,70 @@
+# 컴파일된 클래스 파일
+*.class
+
+# 로그 파일
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Backend (Spring Boot + Gradle)
+backend/build/
+backend/.gradle/
+backend/out/
+backend/bin/
+backend/.settings/
+backend/.project
+backend/.classpath
+
+# Oracle Wallet (절대 업로드 금지!)
+# backend/src/main/resources/Wallet_*/
+# backend/src/main/resources/wallet/
+**/Wallet_*/**
+
+# 환경설정 파일 (DB 비밀번호 포함 - 절대 업로드 금지!)
+backend/src/main/resources/application-local.yml
+backend/src/main/resources/application-dev.yml
+backend/src/main/resources/application-prod.yml
+**/*-local.yml
+
+# Frontend (Vue + Node)
+frontend/node_modules/
+frontend/dist/
+frontend/.DS_Store
+frontend/dist-ssr
+frontend/*.local
+
+# IDE 설정 파일
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+*.swp
+*.swo
+*~
+
+# OS 파일
+.DS_Store
+Thumbs.db
+
+# 환경 변수
+.env
+.env.local
+.env.*.local
+
+# 임시 파일
+*.tmp
+*.temp

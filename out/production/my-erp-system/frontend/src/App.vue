@@ -16,10 +16,6 @@
               active-text-color="#ffd04b"
               @select="handleMenuSelect"
             >
-              <el-menu-item index="/dashboard">
-                <el-icon><DataAnalysis /></el-icon>
-                <span>대시보드</span>
-              </el-menu-item>
               <el-menu-item index="/employees">
                 <el-icon><UserFilled /></el-icon>
                 <span>사원 관리</span>
@@ -28,24 +24,12 @@
                 <el-icon><OfficeBuilding /></el-icon>
                 <span>부서 관리</span>
               </el-menu-item>
-              <!-- ADMIN만 보이는 메뉴 -->
-              <el-menu-item index="/roles" v-if="authStore.isAdmin">
-                <el-icon><Lock /></el-icon>
-                <span>권한 관리</span>
-              </el-menu-item>
             </el-menu>
           </div>
           <div class="header-right">
             <span class="user-info">
               <el-icon><User /></el-icon>
-              {{ authStore.userName }}
-              <el-tag
-                :type="getRoleTagType(authStore.user?.role)"
-                size="small"
-                style="margin-left: 8px;"
-              >
-                {{ getRoleDisplayName(authStore.user?.role) }}
-              </el-tag>
+              {{ authStore.userName }} ({{ authStore.username }})
             </span>
             <el-button type="info" @click="handleLogout" plain>
               <el-icon><SwitchButton /></el-icon>
@@ -67,14 +51,7 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import {
-  User,
-  SwitchButton,
-  UserFilled,
-  OfficeBuilding,
-  DataAnalysis,
-  Lock
-} from '@element-plus/icons-vue'
+import { User, SwitchButton, UserFilled, OfficeBuilding } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 
 const router = useRouter()
@@ -83,26 +60,6 @@ const authStore = useAuthStore()
 
 // 현재 라우트
 const currentRoute = computed(() => route.path)
-
-// 역할 표시명
-const getRoleDisplayName = (role) => {
-  const roleMap = {
-    'ADMIN': '관리자',
-    'MANAGER': '매니저',
-    'USER': '일반사용자'
-  }
-  return roleMap[role] || role
-}
-
-// 역할 태그 타입
-const getRoleTagType = (role) => {
-  const typeMap = {
-    'ADMIN': 'danger',
-    'MANAGER': 'warning',
-    'USER': 'info'
-  }
-  return typeMap[role] || ''
-}
 
 // 메뉴 선택 핸들러
 const handleMenuSelect = (index) => {
