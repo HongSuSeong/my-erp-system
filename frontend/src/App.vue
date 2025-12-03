@@ -28,6 +28,10 @@
                 <el-icon><OfficeBuilding /></el-icon>
                 <span>부서 관리</span>
               </el-menu-item>
+              <el-menu-item index="/notices">
+                <el-icon><Bell /></el-icon>
+                <span>공지사항</span>
+              </el-menu-item>
               <!-- ADMIN만 보이는 메뉴 -->
               <el-menu-item index="/roles" v-if="authStore.isAdmin">
                 <el-icon><Lock /></el-icon>
@@ -38,9 +42,9 @@
           <div class="header-right">
             <span class="user-info">
               <el-icon><User /></el-icon>
-              {{ authStore.userName }}
-              <el-tag
-                :type="getRoleTagType(authStore.user?.role)"
+              {{ authStore.userName }} 
+              <el-tag 
+                :type="getRoleTagType(authStore.user?.role)" 
                 size="small"
                 style="margin-left: 8px;"
               >
@@ -67,13 +71,14 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import {
-  User,
-  SwitchButton,
-  UserFilled,
+import { 
+  User, 
+  SwitchButton, 
+  UserFilled, 
   OfficeBuilding,
   DataAnalysis,
-  Lock
+  Lock,
+  Bell
 } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 

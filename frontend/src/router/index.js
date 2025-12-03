@@ -7,6 +7,7 @@ import EmployeeList from '@/views/EmployeeList.vue'
 import DepartmentList from '@/views/DepartmentList.vue'
 import DepartmentDetail from '@/views/DepartmentDetail.vue'
 import RoleManagement from '@/views/RoleManagement.vue'
+import NoticeBoard from '@/views/NoticeBoard.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -52,12 +53,18 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/notices',
+      name: 'notices',
+      component: NoticeBoard,
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/roles',
       name: 'roles',
       component: RoleManagement,
       meta: { 
         requiresAuth: true,
-        requiresAdmin: true // ADMIN만 접근 가능
+        requiresAdmin: true
       }
     }
   ]
