@@ -76,6 +76,9 @@
         <el-table-column prop="title" label="제목" min-width="300">
           <template #default="scope">
             <span class="notice-title">{{ scope.row.title }}</span>
+            <el-icon v-if="scope.row.hasAttachment" class="attachment-badge" color="#909399">
+              <Paperclip />
+            </el-icon>
           </template>
         </el-table-column>
 
@@ -132,6 +135,28 @@
           />
         </el-form-item>
 
+        <el-form-item label="첨부파일">
+          <el-upload
+            ref="uploadRef"
+            :auto-upload="false"
+            :on-change="handleFileChange"
+            :on-remove="handleFileRemove"
+            :limit="1"
+            :file-list="fileList"
+            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+          >
+            <el-button type="primary" plain>
+              <el-icon><Upload /></el-icon>
+              파일 선택
+            </el-button>
+            <template #tip>
+              <div class="el-upload__tip">
+                최대 10MB, 이미지/문서 파일만 가능
+              </div>
+            </template>
+          </el-upload>
+        </el-form-item>
+
         <el-form-item label="상단 고정" v-if="isAdmin">
           <el-switch v-model="form.isPinned" />
           <span style="margin-left: 10px; color: #909399; font-size: 13px;">
@@ -171,6 +196,18 @@
         </div>
         <el-divider />
         <div class="detail-content" v-html="formatContent(detailNotice.content)"></div>
+        
+        <!-- 첨부파일 -->
+        <div v-if="detailNotice.attachmentUrl" class="attachment-section">
+          <el-divider />
+          <div class="attachment-item">
+            <el-icon class="attachment-icon"><Paperclip /></el-icon>
+            <a :href="getFileUrl(detailNotice.attachmentUrl)" target="_blank" class="attachment-link">
+              {{ detailNotice.attachmentName }}
+            </a>
+            <span class="attachment-size">({{ formatFileSize(detailNotice.attachmentSize) }})</span>
+          </div>
+        </div>
       </div>
     </el-dialog>
   </div>
@@ -184,9 +221,12 @@ import {
   Loading,
   Plus,
   Search,
-  StarFilled
+  StarFilled,
+  Upload,
+  Paperclip
 } from '@element-plus/icons-vue'
 import noticeApi from '@/api/notice'
+import fileApi from '@/api/file'
 
 const authStore = useAuthStore()
 
@@ -199,17 +239,25 @@ const showDetailDialog = ref(false)
 const isEdit = ref(false)
 const detailNotice = ref(null)
 const formRef = ref(null)
+const uploadRef = ref(null)
 
 // 검색 & 필터
 const searchKeyword = ref('')
 const selectedCategory = ref('')
+
+// 파일 업로드
+const fileList = ref([])
+const uploadedFile = ref(null)
 
 // 폼 데이터
 const form = ref({
   title: '',
   content: '',
   category: 'GENERAL',
-  isPinned: false
+  isPinned: false,
+  attachmentUrl: null,
+  attachmentName: null,
+  attachmentSize: null
 })
 
 // 유효성 검사
@@ -231,10 +279,13 @@ const canWrite = computed(() => {
   return role === 'ADMIN' || role === 'MANAGER'
 })
 
-// ⚠️ 버그: authorId 타입 비교 문제
 const canEdit = (notice) => {
   if (!authStore.user) return false
-  return notice.authorId === authStore.user.id || authStore.isAdmin
+  // Number로 명시적 변환하여 비교
+  const userId = Number(authStore.user.id)
+  const authorId = Number(notice.authorId)
+  console.log('권한 체크:', { userId, authorId, isAdmin: authStore.isAdmin })
+  return authorId === userId || authStore.isAdmin
 }
 
 // 카테고리 관련
@@ -266,6 +317,38 @@ const formatDate = (dateString) => {
     hour: '2-digit',
     minute: '2-digit'
   })
+}
+
+// 파일 크기 포맷
+const formatFileSize = (bytes) => {
+  if (!bytes) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+}
+
+// 파일 다운로드 URL
+const getFileUrl = (filename) => {
+  return fileApi.getDownloadUrl(filename)
+}
+
+// 파일 선택 핸들러
+const handleFileChange = (file) => {
+  // 파일 크기 체크 (10MB)
+  const maxSize = 10 * 1024 * 1024
+  if (file.size > maxSize) {
+    ElMessage.error('파일 크기는 10MB를 초과할 수 없습니다')
+    fileList.value = []
+    return
+  }
+  uploadedFile.value = file.raw
+}
+
+// 파일 제거 핸들러
+const handleFileRemove = () => {
+  uploadedFile.value = null
+  fileList.value = []
 }
 
 // 내용 포맷 (줄바꿈 처리)
@@ -330,13 +413,18 @@ const handleCategoryFilter = async () => {
   }
 }
 
-// ⚠️ 버그: 조회수가 목록에 실시간 반영 안됨
 // 행 클릭 (상세보기)
 const handleRowClick = async (row) => {
   try {
     const response = await noticeApi.getById(row.id)
     detailNotice.value = response.data
     showDetailDialog.value = true
+    
+    // 조회수 실시간 반영 - 목록에서 해당 공지의 조회수 증가
+    const index = notices.value.findIndex(n => n.id === row.id)
+    if (index !== -1) {
+      notices.value[index].viewCount = response.data.viewCount
+    }
   } catch (error) {
     console.error('상세 조회 실패:', error)
     ElMessage.error('공지사항을 불러오는데 실패했습니다')
@@ -352,8 +440,20 @@ const handleEdit = (notice) => {
     title: notice.title,
     content: notice.content,
     category: notice.category,
-    isPinned: notice.isPinned
+    isPinned: notice.isPinned,
+    attachmentUrl: notice.attachmentUrl,
+    attachmentName: notice.attachmentName,
+    attachmentSize: notice.attachmentSize
   }
+  
+  // 기존 첨부파일이 있으면 표시
+  if (notice.attachmentName) {
+    fileList.value = [{
+      name: notice.attachmentName,
+      url: getFileUrl(notice.attachmentUrl)
+    }]
+  }
+  
   showDialog.value = true
 }
 
@@ -366,6 +466,14 @@ const handleSubmit = async () => {
 
     submitting.value = true
     try {
+      // 파일 업로드 처리
+      if (uploadedFile.value) {
+        const fileResponse = await fileApi.upload(uploadedFile.value)
+        form.value.attachmentUrl = fileResponse.data.filename
+        form.value.attachmentName = fileResponse.data.originalFilename
+        form.value.attachmentSize = fileResponse.data.size
+      }
+
       if (isEdit.value) {
         await noticeApi.update(form.value.id, form.value)
         ElMessage.success('공지사항이 수정되었습니다')
@@ -419,8 +527,13 @@ const resetForm = () => {
     title: '',
     content: '',
     category: 'GENERAL',
-    isPinned: false
+    isPinned: false,
+    attachmentUrl: null,
+    attachmentName: null,
+    attachmentSize: null
   }
+  fileList.value = []
+  uploadedFile.value = null
   if (formRef.value) {
     formRef.value.resetFields()
   }
@@ -482,6 +595,12 @@ onMounted(() => {
   color: #409EFF;
 }
 
+.attachment-badge {
+  margin-left: 8px;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
 :deep(.pinned-row) {
   background-color: #FFF3E0 !important;
   font-weight: 600;
@@ -522,6 +641,46 @@ onMounted(() => {
   color: #303133;
   min-height: 200px;
   white-space: pre-wrap;
+}
+
+/* 첨부파일 스타일 */
+.attachment-section {
+  margin-top: 20px;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.attachment-item:hover {
+  background-color: #e4e7ed;
+}
+
+.attachment-icon {
+  font-size: 18px;
+  color: #909399;
+}
+
+.attachment-link {
+  color: #409EFF;
+  text-decoration: none;
+  font-weight: 500;
+  flex: 1;
+}
+
+.attachment-link:hover {
+  text-decoration: underline;
+}
+
+.attachment-size {
+  color: #909399;
+  font-size: 12px;
 }
 
 /* 반응형 */
